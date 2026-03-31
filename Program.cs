@@ -5,32 +5,50 @@ class Program
 {
     static void Main()
     {
-        using ShopContext db = new ShopContext();
-        db.Database.EnsureCreated();
+        Console.WriteLine("Починаємо роботу з міграціями!\n");
 
-        Console.WriteLine("Базу створено! Починаємо роботу.\n");
+        using (ShopContext db = new ShopContext())
+        {
+            Console.WriteLine("--- ДОДАВАННЯ ---");
+            Brand myBrand = new Brand { Name = "L'Oreal", YearFounded = 1909 };
+            Product myProduct = new Product { Name = "Mascara", Price = 450.50m, Brand = myBrand };
+            
+            Console.WriteLine($"Стан продукту ДО Add: {db.Entry(myProduct).State}"); 
+            
+            db.Brands.Add(myBrand);
+            db.Products.Add(myProduct);
+            
+            Console.WriteLine($"Стан продукту ПІСЛЯ Add: {db.Entry(myProduct).State}"); 
+            
+            db.SaveChanges(); 
+            
+            Console.WriteLine($"Стан продукту ПІСЛЯ SaveChanges: {db.Entry(myProduct).State}\n"); 
+        }
 
-        // 1. Створення 
-        Brand myBrand = new Brand { Name = "NYX" };
-        Product myProduct = new Product { Name = "Lipstick", Brand = myBrand };
-        
-        db.Brands.Add(myBrand); 
-        db.Products.Add(myProduct); 
-        db.SaveChanges(); 
-        Console.WriteLine("Створено: додано бренд NYX та помаду.");
+        using (ShopContext db = new ShopContext())
+        {
+            Console.WriteLine("--- ОНОВЛЕННЯ ---");
+            Product savedProduct = db.Products.First();
+            Console.WriteLine($"Знайдено: {savedProduct.Name}, Ціна: {savedProduct.Price} грн");
+            
+            savedProduct.Price = 500.00m; 
+            
+            Console.WriteLine($"Стан після зміни ціни: {db.Entry(savedProduct).State}");
+            db.SaveChanges(); 
+            Console.WriteLine("Ціну успішно оновлено у базі!\n");
+        }
 
-        // 2. Читання 
-        Product savedProduct = db.Products.First(); 
-        Console.WriteLine($"Прочитано з бази: {savedProduct.Name}");
-
-        // 3. Оновлення 
-        savedProduct.Name = "Red Lipstick"; 
-        db.SaveChanges(); 
-        Console.WriteLine($"Оновлено: назву змінено на {savedProduct.Name}");
-
-        // 4. Видалення 
-        db.Products.Remove(savedProduct); 
-        db.SaveChanges(); 
-        Console.WriteLine("Видалено: продукт видалено з бази.");
+        using (ShopContext db = new ShopContext())
+        {
+            Console.WriteLine("--- ВИДАЛЕННЯ ---");
+            Product productToDelete = db.Products.First();
+            
+            db.Products.Remove(productToDelete);
+            Console.WriteLine($"Стан після Remove: {db.Entry(productToDelete).State}");
+            
+            db.SaveChanges(); 
+            Console.WriteLine("Продукт видалено з бази.");
+        }
     }
 }
+
