@@ -1,53 +1,63 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 
 class Program
 {
     static void Main()
     {
-        Console.WriteLine("Починаємо роботу з міграціями!\n");
-
-        using (ShopContext db = new ShopContext())
+        using (var context = new ShopContext())
         {
-            Console.WriteLine("--- ДОДАВАННЯ ---");
-            Brand myBrand = new Brand { Name = "L'Oreal", YearFounded = 1909 };
-            Product myProduct = new Product { Name = "Mascara", Price = 450.50m, Brand = myBrand };
-            
-            Console.WriteLine($"Стан продукту ДО Add: {db.Entry(myProduct).State}"); 
-            
-            db.Brands.Add(myBrand);
-            db.Products.Add(myProduct);
-            
-            Console.WriteLine($"Стан продукту ПІСЛЯ Add: {db.Entry(myProduct).State}"); 
-            
-            db.SaveChanges(); 
-            
-            Console.WriteLine($"Стан продукту ПІСЛЯ SaveChanges: {db.Entry(myProduct).State}\n"); 
-        }
+            // Використовуємо наш новий репозиторій!
+            var repo = new ShopRepository(context);
 
-        using (ShopContext db = new ShopContext())
-        {
-            Console.WriteLine("--- ОНОВЛЕННЯ ---");
-            Product savedProduct = db.Products.First();
-            Console.WriteLine($"Знайдено: {savedProduct.Name}, Ціна: {savedProduct.Price} грн");
-            
-            savedProduct.Price = 500.00m; 
-            
-            Console.WriteLine($"Стан після зміни ціни: {db.Entry(savedProduct).State}");
-            db.SaveChanges(); 
-            Console.WriteLine("Ціну успішно оновлено у базі!\n");
-        }
+            Console.WriteLine("--- 1. СТВОРЕННЯ ДАНИХ ---");
+            var myBrand = new Brand 
+            { 
+                Name = "Dior",
+                Products = new List<Product>
+                {
+                    new Product 
+                    { 
+                        Name = "Perfume", Price = 3500m,
+                        Reviews = new List<Review> { new Review { Text = "Amazing!", Rating = 5 } }
+                    },
+                    new Product { Name = "Lipstick", Price = 1200m }
+                }
+            };
+            repo.AddBrand(myBrand);
+            Console.WriteLine("Бренд, продукти та відгуки успішно додані!\n");
 
-        using (ShopContext db = new ShopContext())
-        {
-            Console.WriteLine("--- ВИДАЛЕННЯ ---");
-            Product productToDelete = db.Products.First();
-            
-            db.Products.Remove(productToDelete);
-            Console.WriteLine($"Стан після Remove: {db.Entry(productToDelete).State}");
-            
-            db.SaveChanges(); 
-            Console.WriteLine("Продукт видалено з бази.");
+            Console.WriteLine("--- 2. СКЛАДНИЙ ЗАПИТ (INCLUDE) ---");
+            var brands = repo.GetAllBrandsWithDetails();
+            foreach (var b in brands)
+            {
+                Console.WriteLine($"Бренд: {b.Name}");
+                foreach (var p in b.Products)
+                {
+                    Console.WriteLine($"  - {p.Name} ({p.Price} грн), Відгуків: {p.Reviews.Count}");
+                }
+            }
+            Console.WriteLine();
+
+            Console.WriteLine("--- 3. ФІЛЬТРАЦІЯ (LINQ) ---");
+            var cheapProducts = repo.GetProductsCheaperThan(2000m);
+            Console.WriteLine("Продукти дешевші за 2000 грн:");
+            foreach (var p in cheapProducts)
+            {
+                Console.WriteLine($"  * {p.Name} - {p.Price} грн");
+            }
+            Console.WriteLine();
+
+            Console.WriteLine("--- 4. ОНОВЛЕННЯ ---");
+            if (cheapProducts.Count > 0)
+            {
+                repo.UpdateProductPrice(cheapProducts[0].Id, 1500m);
+                Console.WriteLine($"Ціну на {cheapProducts[0].Name} успішно оновлено!\n");
+            }
+
+            Console.WriteLine("--- 5. ВИДАЛЕННЯ ---");
+            repo.DeleteReview(1);
+            Console.WriteLine("Відгук видалено з бази.");
         }
     }
 }
