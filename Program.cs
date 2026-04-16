@@ -1,64 +1,23 @@
-using System;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json.Serialization;
 
-class Program
-{
-    static void Main()
-    {
-        using (var context = new ShopContext())
-        {
-            // Використовуємо наш новий репозиторій!
-            var repo = new ShopRepository(context);
+var builder = WebApplication.CreateBuilder(args);
 
-            Console.WriteLine("--- 1. СТВОРЕННЯ ДАНИХ ---");
-            var myBrand = new Brand 
-            { 
-                Name = "Dior",
-                Products = new List<Product>
-                {
-                    new Product 
-                    { 
-                        Name = "Perfume", Price = 3500m,
-                        Reviews = new List<Review> { new Review { Text = "Amazing!", Rating = 5 } }
-                    },
-                    new Product { Name = "Lipstick", Price = 1200m }
-                }
-            };
-            repo.AddBrand(myBrand);
-            Console.WriteLine("Бренд, продукти та відгуки успішно додані!\n");
+// Налаштування JSON та Swagger
+builder.Services.AddControllers().AddJsonOptions(x =>
+    x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-            Console.WriteLine("--- 2. СКЛАДНИЙ ЗАПИТ (INCLUDE) ---");
-            var brands = repo.GetAllBrandsWithDetails();
-            foreach (var b in brands)
-            {
-                Console.WriteLine($"Бренд: {b.Name}");
-                foreach (var p in b.Products)
-                {
-                    Console.WriteLine($"  - {p.Name} ({p.Price} грн), Відгуків: {p.Reviews.Count}");
-                }
-            }
-            Console.WriteLine();
+// Підключення бази та сервісу
+builder.Services.AddDbContext<ShopContext>();
+builder.Services.AddScoped<ProductService>();
 
-            Console.WriteLine("--- 3. ФІЛЬТРАЦІЯ (LINQ) ---");
-            var cheapProducts = repo.GetProductsCheaperThan(2000m);
-            Console.WriteLine("Продукти дешевші за 2000 грн:");
-            foreach (var p in cheapProducts)
-            {
-                Console.WriteLine($"  * {p.Name} - {p.Price} грн");
-            }
-            Console.WriteLine();
+var app = builder.Build();
 
-            Console.WriteLine("--- 4. ОНОВЛЕННЯ ---");
-            if (cheapProducts.Count > 0)
-            {
-                repo.UpdateProductPrice(cheapProducts[0].Id, 1500m);
-                Console.WriteLine($"Ціну на {cheapProducts[0].Name} успішно оновлено!\n");
-            }
+app.UseSwagger();
+app.UseSwaggerUI();
+app.MapControllers();
 
-            Console.WriteLine("--- 5. ВИДАЛЕННЯ ---");
-            repo.DeleteReview(1);
-            Console.WriteLine("Відгук видалено з бази.");
-        }
-    }
-}
-
+app.Run();
