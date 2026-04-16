@@ -27,4 +27,15 @@ public class ProductService
         _context.SaveChanges();
         return product;
     }
+
+    // НОВИЙ МЕТОД ДЛЯ ВИДАЛЕННЯ
+    public bool DeleteProduct(int id)
+    {
+        var product = _context.Products.FirstOrDefault(p => p.Id == id);
+        if (product == null) return false;
+
+        _context.Products.Remove(product);
+        _context.SaveChanges();
+        return true;
+    }
 }
