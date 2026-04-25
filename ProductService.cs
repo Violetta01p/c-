@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
 public class ProductService
@@ -23,9 +24,16 @@ public class ProductService
 
     public Product AddProduct(Product product)
     {
+        try{
+       // if(product==null) throw new ArgumentNullException(nameof(product));
+
         _context.Products.Add(product);
-        _context.SaveChanges();
-        return product;
+        _context.SaveChanges(); 
+        return product;}
+        catch ( Exception ex){
+            Console.WriteLine($"Помилка БД: {ex.Message}");
+            throw;
+        }
     }
 
     // НОВИЙ МЕТОД ДЛЯ ВИДАЛЕННЯ
