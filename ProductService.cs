@@ -1,40 +1,59 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper; // Обов'язково для роботи IMapper
+using C_.Application.DTOs; // Твій шлях до DTO
 
 public class ProductService
 {
     private readonly ShopContext _context;
+    private readonly IMapper _mapper;
 
-    public ProductService(ShopContext context)
+    // Конструктор тепер правильно приймає обидва сервіси
+    public ProductService(ShopContext context, IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
     }
 
-    public List<Product> GetAllProducts()
+    // Отримуємо всі продукти та перетворюємо їх на DTO
+    public List<ProductDto> GetAllProducts()
     {
-        return _context.Products.Include(p => p.Brand).ToList();
+        var products = _context.Products
+            .Include(p => p.Brand) // Якщо у моделі Product є навігаційна властивість Brand
+            .ToList();
+            
+        return _mapper.Map<List<ProductDto>>(products);
     }
 
-    public Product? GetProductById(int id)
+    // Отримуємо один продукт за ID і мапимо в DTO
+    public ProductDto? GetProductById(int id)
     {
-        return _context.Products.Include(p => p.Brand).FirstOrDefault(p => p.Id == id);
+        var product = _context.Products
+            .Include(p => p.Brand)
+            .FirstOrDefault(p => p.Id == id);
+            
+        return _mapper.Map<ProductDto>(product);
     }
 
-    public Product AddProduct(Product product)
+    // Додавання продукту
+    public ProductDto AddProduct(Product product)
     {
-        try{
-
-        _context.Products.Add(product);
-        _context.SaveChanges(); 
-        return product;}
-        catch ( Exception ex){
-            Console.WriteLine($"Помилка БД: {ex.Message}");
+        try
+        {
+            _context.Products.Add(product);
+            _context.SaveChanges();
+            return _mapper.Map<ProductDto>(product);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Помилка БД: {ex.Message}");
             throw;
         }
     }
 
+    // Видалення продукту
     public bool DeleteProduct(int id)
     {
         var product = _context.Products.FirstOrDefault(p => p.Id == id);
@@ -45,3 +64,5 @@ public class ProductService
         return true;
     }
 }
+      
+
