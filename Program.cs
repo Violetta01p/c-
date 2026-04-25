@@ -1,3 +1,4 @@
+using C_.Application.Mapping;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -6,6 +7,11 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Http; 
 using System.Threading.Tasks;    
 using System;
+using AutoMapper;
+// Якщо ти створила папку Application, додай ці рядки:
+using C_.Application.DTOs;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +24,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<ShopContext>();
 builder.Services.AddScoped<ProductService>();
+
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
 
 var app = builder.Build();
 
