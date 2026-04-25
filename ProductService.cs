@@ -25,7 +25,6 @@ public class ProductService
     public Product AddProduct(Product product)
     {
         try{
-       // if(product==null) throw new ArgumentNullException(nameof(product));
 
         _context.Products.Add(product);
         _context.SaveChanges(); 
@@ -36,7 +35,6 @@ public class ProductService
         }
     }
 
-    // НОВИЙ МЕТОД ДЛЯ ВИДАЛЕННЯ
     public bool DeleteProduct(int id)
     {
         var product = _context.Products.FirstOrDefault(p => p.Id == id);

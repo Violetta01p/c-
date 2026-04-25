@@ -17,7 +17,7 @@ public class ProductsController : ControllerBase
     public ActionResult<List<ProductDto>> GetAll()
     {
         var products = _productService.GetAllProducts();
-        // ТУТ ВИПРАВЛЕНО (додано ?? "" та Price)
+        
         var dtos = products.Select(p => new ProductDto(p.Id, p.Name ?? "", p.Price)).ToList();
         return Ok(dtos);
     }
