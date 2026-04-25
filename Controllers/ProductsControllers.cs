@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.Linq;
+using System; // Обов'язково для роботи Exception
+using C_.Application.DTOs; // Щоб бачив ProductDto
 
 [ApiController]
 [Route("api/[controller]")]
@@ -16,42 +17,38 @@ public class ProductsController : ControllerBase
     [HttpGet]
     public ActionResult<List<ProductDto>> GetAll()
     {
-        var products = _productService.GetAllProducts();
-        
-        var dtos = products.Select(p => new ProductDto(p.Id, p.Name ?? "", p.Price)).ToList();
+        // Тепер сервіс сам повертає List<ProductDto>, ручне маплення не потрібне!
+        var dtos = _productService.GetAllProducts();
         return Ok(dtos);
     }
 
     [HttpGet("{id}")]
     public ActionResult<ProductDto> GetById(int id)
     {
-        var product = _productService.GetProductById(id);
-        if (product == null) return NotFound(new { message = "Продукт не знайдено" });
-        
-        return Ok(new ProductDto(product.Id, product.Name ?? "", product.Price));
+        // Сервіс сам повертає ProductDto
+        var dto = _productService.GetProductById(id);
+        if (dto == null) return NotFound(new { message = "Продукт не знайдено" });
+      
+        return Ok(dto);
     }
 
     [HttpPost]
     public ActionResult<ProductDto> Create([FromBody] CreateProductDto dto)
     {
+        // Тепер ми кидаємо ArgumentException, а наш ApiExceptionFilter його автоматично спіймає і поверне 400 BadRequest!
         if (dto == null || string.IsNullOrEmpty(dto.Name))
-            return BadRequest(new { message = "Некоректні дані" });
+            throw new ArgumentException("Ім'я продукту не може бути порожнім.");
 
-        var product = new Product 
-        { 
-            Name = dto.Name, 
+        var product = new Product
+        {
+            Name = dto.Name,
             Price = dto.Price,
-            BrandId = dto.BrandId 
+            BrandId = dto.BrandId
         };
-        
-        try {
-            var created = _productService.AddProduct(product);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, 
-                new ProductDto(created.Id, created.Name ?? "", created.Price));
-        }
-        catch (System.Exception) {
-            return StatusCode(500, "Помилка бази даних. Перевірте, чи існує BrandId, який ви вказали!");
-        }
+      
+        // Ми прибрали try-catch! Якщо буде помилка БД, її перехопить наш ExceptionHandlingMiddleware.
+        var createdDto = _productService.AddProduct(product);
+        return CreatedAtAction(nameof(GetById), new { id = createdDto.Id }, createdDto);
     }
 
     [HttpDelete("{id}")]
@@ -59,5 +56,26 @@ public class ProductsController : ControllerBase
     {
         if (_productService.DeleteProduct(id)) return Ok(new { message = "Видалено" });
         return NotFound();
+    }
+
+    // ========================================================
+    // МЕТОД ДЛЯ ДЕМОНСТРАЦІЇ ПРАКТИЧНОЇ №13 (ВИКЛАДАЧУ)
+    // ========================================================
+    [HttpGet("test-errors/{type}")]
+    public IActionResult TestErrors(int type)
+    {
+        // Імітація 1: Некоректний параметр (спіймає ApiExceptionFilter -> поверне 400)
+        if (type == 1) 
+            throw new ArgumentException("Ціна товару не може бути від'ємною!");
+
+        // Імітація 2: Порушення бізнес-правила (спіймає ApiExceptionFilter -> поверне 400)
+        if (type == 2) 
+            throw new InvalidOperationException("Неможливо видалити товар, бо він вже у кошику клієнта!");
+
+        // Імітація 3: Системна помилка БД (спіймає ExceptionHandlingMiddleware -> поверне 500)
+        if (type == 3) 
+            throw new Exception("Відмова доступу до бази даних SQLite.");
+
+        return Ok("Все працює без помилок. Виберіть тип помилки від 1 до 3.");
     }
 }
