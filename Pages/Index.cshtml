@@ -1,0 +1,21 @@
+@page
+@model C_.Pages.IndexModel
+
+<h2>Список продуктів</h2>
+<a asp-page="Create"> + Додати новий продукт </a>
+
+<table border="1" cellpadding="10" cellspacing="0">
+    <tr>
+        <th>ID</th>
+        <th>Назва</th>
+        <th>Ціна</th>
+    </tr>
+    @foreach(var product in Model.Products)
+    {
+        <tr>
+            <td>@product.Id</td>
+            <td>@product.Name</td>
+            <td>@product.Price грн</td>
+        </tr>
+    }
+</table>

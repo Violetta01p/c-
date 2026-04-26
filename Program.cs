@@ -22,7 +22,7 @@ builder.Services.AddControllers(options =>
     options.Filters.Add<ApiExceptionFilter>();
 }).AddJsonOptions(x =>
    x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
-
+builder.Services.AddRazorPages();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -46,6 +46,7 @@ app.UseSwaggerUI();
 
 app.UseAuthorization();
 app.MapControllers();
+app.MapRazorPages();
 
 app.Run();
 
