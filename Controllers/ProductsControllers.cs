@@ -59,7 +59,7 @@ public class ProductsController : ControllerBase
     }
 
     // ========================================================
-    // МЕТОД ДЛЯ ДЕМОНСТРАЦІЇ ПРАКТИЧНОЇ №13 (ВИКЛАДАЧУ)
+    // МЕТОД ДЛЯ ДЕМОНСТРАЦІЇ ПРАКТИЧНОЇ №13 
     // ========================================================
     [HttpGet("test-errors/{type}")]
     public IActionResult TestErrors(int type)
