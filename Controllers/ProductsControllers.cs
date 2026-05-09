@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System; // Обов'язково для роботи Exception
-using C_.Application.DTOs; // Щоб бачив ProductDto
+using C_.Application.DTOs;
+
+namespace C_.WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -14,68 +15,53 @@ public class ProductsController : ControllerBase
         _productService = productService;
     }
 
+    // 1. Отримання всіх (Стандартний GET)
     [HttpGet]
     public ActionResult<List<ProductDto>> GetAll()
     {
-        // Тепер сервіс сам повертає List<ProductDto>, ручне маплення не потрібне!
-        var dtos = _productService.GetAllProducts();
-        return Ok(dtos);
+        return Ok(_productService.GetAllProducts());
     }
 
-    [HttpGet("{id}")]
+    // 2. Отримання за ID з обмеженням маршруту (Route Constraint: :int)
+    [HttpGet("{id:int}")] 
     public ActionResult<ProductDto> GetById(int id)
     {
-        // Сервіс сам повертає ProductDto
         var dto = _productService.GetProductById(id);
         if (dto == null) return NotFound(new { message = "Продукт не знайдено" });
-      
         return Ok(dto);
     }
 
+    // 3. Пошук через Query String (api/products/search?name=phone&maxPrice=500)
+    [HttpGet("search")]
+    public ActionResult<List<ProductDto>> Search([FromQuery] string? name, [FromQuery] decimal? maxPrice)
+    {
+        // Тут логіка фільтрації (для практичної можна просто повернути повідомлення або викликати метод сервісу)
+        return Ok(new { Message = $"Пошук: {name}, макс. ціна: {maxPrice}" });
+    }
+
+    // 4. Створення з АВТОМАТИЧНОЮ валідацією (Model Binding + Validation)
     [HttpPost]
     public ActionResult<ProductDto> Create([FromBody] CreateProductDto dto)
     {
-        // Тепер ми кидаємо ArgumentException, а наш ApiExceptionFilter його автоматично спіймає і поверне 400 BadRequest!
-        if (dto == null || string.IsNullOrEmpty(dto.Name))
-            throw new ArgumentException("Ім'я продукту не може бути порожнім.");
+        // [ApiController] сам перевіряє ModelState. 
+        // Якщо Name порожнє, цей метод навіть не почне виконуватись, 
+        // клієнт одразу отримає 400 BadRequest.
 
-        var product = new Product
+        var product = new Product // Приклад мапінгу (краще робити в сервісі або через AutoMapper)
         {
             Name = dto.Name,
             Price = dto.Price,
             BrandId = dto.BrandId
         };
       
-        // Ми прибрали try-catch! Якщо буде помилка БД, її перехопить наш ExceptionHandlingMiddleware.
         var createdDto = _productService.AddProduct(product);
         return CreatedAtAction(nameof(GetById), new { id = createdDto.Id }, createdDto);
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
     public ActionResult Delete(int id)
     {
         if (_productService.DeleteProduct(id)) return Ok(new { message = "Видалено" });
         return NotFound();
-    }
-
-    // ========================================================
-    // МЕТОД ДЛЯ ДЕМОНСТРАЦІЇ ПРАКТИЧНОЇ №13 
-    // ========================================================
-    [HttpGet("test-errors/{type}")]
-    public IActionResult TestErrors(int type)
-    {
-        // Імітація 1: Некоректний параметр (спіймає ApiExceptionFilter -> поверне 400)
-        if (type == 1) 
-            throw new ArgumentException("Ціна товару не може бути від'ємною!");
-
-        // Імітація 2: Порушення бізнес-правила (спіймає ApiExceptionFilter -> поверне 400)
-        if (type == 2) 
-            throw new InvalidOperationException("Неможливо видалити товар, бо він вже у кошику клієнта!");
-
-        // Імітація 3: Системна помилка БД (спіймає ExceptionHandlingMiddleware -> поверне 500)
-        if (type == 3) 
-            throw new Exception("Відмова доступу до бази даних SQLite.");
-
-        return Ok("Все працює без помилок. Виберіть тип помилки від 1 до 3.");
     }
 }
