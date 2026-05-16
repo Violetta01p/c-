@@ -1,0 +1,13 @@
+@page "{id:int}"
+@model C_.Pages.DetailsModel
+
+<h2>Деталі продукту</h2>
+
+<div style="border: 1px solid #ccc; padding: 15px; width: 300px;">
+    <p><strong>ID:</strong> @Model.Product.Id</p>
+    <p><strong>Назва:</strong> @Model.Product.Name</p>
+    <p><strong>Ціна:</strong> @Model.Product.Price грн</p>
+</div>
+
+<br />
+<a asp-page="Index">Повернутися до списку</a>
