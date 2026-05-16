@@ -31,6 +31,7 @@ public class ProductService
     // 🔹 GET ALL (з кешем)
     public List<ProductDto> GetAllProducts()
     {
+        Console.WriteLine("🔥 SERVICE IS WORKING");
         _logger.LogInformation("Запит на отримання всіх продуктів");
 
         // 🔥 cache hit
