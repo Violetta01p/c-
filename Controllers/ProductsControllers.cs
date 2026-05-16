@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using C_.Application.DTOs;
+using Microsoft.AspNetCore.Authorization;
+//using C_.Domain.Entities; // Додано, щоб клас Product не світився червоним
 
 namespace C_.WebAPI.Controllers;
 
@@ -35,19 +37,15 @@ public class ProductsController : ControllerBase
     [HttpGet("search")]
     public ActionResult<List<ProductDto>> Search([FromQuery] string? name, [FromQuery] decimal? maxPrice)
     {
-        // Тут логіка фільтрації (для практичної можна просто повернути повідомлення або викликати метод сервісу)
         return Ok(new { Message = $"Пошук: {name}, макс. ціна: {maxPrice}" });
     }
 
-    // 4. Створення з АВТОМАТИЧНОЮ валідацією (Model Binding + Validation)
+    // 4. Створення: Захищено ПОЛІТИКОЮ (тільки ті, хто має claim "permission=edit")
+    [Authorize(Policy = "CanEdit")] 
     [HttpPost]
     public ActionResult<ProductDto> Create([FromBody] CreateProductDto dto)
     {
-        // [ApiController] сам перевіряє ModelState. 
-        // Якщо Name порожнє, цей метод навіть не почне виконуватись, 
-        // клієнт одразу отримає 400 BadRequest.
-
-        var product = new Product // Приклад мапінгу (краще робити в сервісі або через AutoMapper)
+        var product = new Product 
         {
             Name = dto.Name,
             Price = dto.Price,
@@ -58,6 +56,8 @@ public class ProductsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = createdDto.Id }, createdDto);
     }
 
+    // 5. Видалення: Захищено РОЛЛЮ (тільки Admin або Manager)
+    [Authorize(Roles = "Admin,Manager")] 
     [HttpDelete("{id:int}")]
     public ActionResult Delete(int id)
     {

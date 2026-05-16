@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using System;
 using AutoMapper;
 using C_.Application.DTOs;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +40,20 @@ builder.Services.AddScoped<ProductService>();
 builder.Services.AddMemoryCache();
 
 builder.Services.AddAutoMapper(typeof(MappingProfile));
+// --- АУТЕНТИФІКАЦІЯ ТА АВТОРИЗАЦІЯ ---
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options => 
+    {
+        options.LoginPath = "/api/auth/unauthorized"; 
+        options.AccessDeniedPath = "/api/auth/forbidden"; 
+    });
 
+builder.Services.AddAuthorization(options =>
+{
+    // Створюємо політику: дозволено тільки тим, у кого є claim "permission" = "edit"
+    options.AddPolicy("CanEdit", policy =>
+        policy.RequireClaim("permission", "edit"));
+});
 var app = builder.Build();
 
 // --- 2. Pipeline ---
@@ -48,7 +63,7 @@ app.UseMiddleware<RequestLoggingMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI();
-
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapRazorPages();

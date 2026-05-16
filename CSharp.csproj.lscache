@@ -57,7 +57,9 @@ Application/DTOs/
  Dtos.cs
  ProductDto.cs
 Application/Mapping/MappingProfile.cs
-Controllers/ProductsControllers.cs
+Controllers/
+ AuthController.cs
+ ProductsControllers.cs
 Data/
  ShopContext.cs
  ShopRepository.cs
